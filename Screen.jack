@@ -1,0 +1,240 @@
+/**
+ * Copyright (c) 2011 Ivan Vladimirov Ivanov (ivan.vladimirov.ivanov@gmail.com)
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+
+class Screen {
+
+  static boolean color;
+  static Array power2;
+
+  function void init() {
+    var int i, value;
+
+    let color = true;
+    let power2 = Array.new(16);
+    let i = 0;
+    let value = 1;
+    while(i < 16) {
+      let power2[i] = value;
+      let i = i + 1;
+      let value = value + value;
+    }
+    return;
+  }
+
+  function void clearScreen() {
+    var int i, j;
+    var boolean currentColor;
+
+    let currentColor = color;
+    let color = false;
+    let i = 0;
+    while(i < 512) {
+      let j = 0;
+      while(j < 256) {
+        do Screen.drawPixel(i, j);
+        let j = j + 1;
+      }
+      let i = i + 1;
+    }
+    let color = currentColor;
+
+    return;
+  }
+
+  function void setColor(boolean b) {
+    let color = b;
+    return;
+  }
+
+  function void drawPixel(int x, int y) {
+    var int address, bit, div16;
+
+    if((x < 0) | (x > 511)) {
+      do Sys.error(7);
+    }
+    if((y < 0) | (y > 255)) {
+      do Sys.error(7);
+    }
+
+    let div16 = x / 16;
+    let address = 16384 + (y * 32) + div16;
+    let bit = x - (div16 * 16);
+    if(color = true) {
+      do Memory.poke(address, Memory.peek(address) | power2[bit]);
+    }
+    else {
+      do Memory.poke(address, Memory.peek(address) & (~power2[bit]));
+    }
+    return;
+  }
+
+  function void drawLine(int x1, int y1, int x2, int y2) {
+    if((x1 < 0) | (x1 > 511)) {
+      do Sys.error(8);
+    }
+    if((x2 < 0) | (x2 > 511)) {
+      do Sys.error(8);
+    }
+    if((y1 < 0) | (y1 > 255)) {
+      do Sys.error(8);
+    }
+    if((y2 < 0) | (y2 > 255)) {
+      do Sys.error(8);
+    }
+
+    if(x1 = x2) {
+      do Screen.drawVerticalLine(x1, Math.min(y1, y2), Math.max(y1, y2));
+      return;
+    }
+    if(y1 = y2) {
+      do Screen.drawHorizontalLine(y1, Math.min(x1, x2), Math.max(x1, x2));
+      return;
+    }
+    if((x1 < x2) & (y1 < y2)) {
+      do Screen.drawPosSlopedLine(x1, y1, x2 - x1, y2 - y1);
+      return;
+    }
+    if((x2 < x1) & (y2 < y1)) {
+      do Screen.drawPosSlopedLine(x2, y2, x1 - x2, y1 - y2);
+      return;
+    }
+    if((x1 < x2) & (y1 > y2)) {
+      do Screen.drawNegSlopedLine(x1, y1, x2 - x1, y2 - y1);
+      return;
+    }
+    if((x2 < x1) & (y1 < y2)) {
+      do Screen.drawNegSlopedLine(x2, y2, x1 - x2, y1 - y2);
+      return;
+    }
+
+    return;
+  }
+
+  function void drawPosSlopedLine(int x, int y, int dx, int dy) {
+    var int a, b, d;
+
+    let a = 0;
+    let b = 0;
+    let d = 0;
+    do Screen.drawPixel(x, y);
+    while((a < dx) & (b < dy)) {
+      if(d > 0) {
+        let a = a + 1;
+        let d = d - dy;
+      }
+      else {
+        let b = b + 1;
+        let d = d + dx;
+      }
+      do Screen.drawPixel(x + a, y + b);
+    }
+    return;
+  }
+
+  function void drawNegSlopedLine(int x, int y, int dx, int dy) {
+    var int a, b, d;
+
+    let a = 0;
+    let b = 0;
+    let d = 0;
+    do Screen.drawPixel(x, y);
+    while((a < dx) & (b > dy)) {
+      if(d > 0) {
+        let b = b - 1;
+        let d = d - dx;
+      }
+      else {
+        let a = a + 1;
+        let d = d - dy;
+      }
+      do Screen.drawPixel(x + a, y + b);
+    }
+    return;
+  }
+
+  function void drawVerticalLine(int x, int y1, int y2) {
+    do Screen.drawPixel(x, y1);
+    while(y1 < y2) {
+      let y1 = y1 + 1;
+      do Screen.drawPixel(x, y1);
+    }
+    return;
+  }
+
+  function void drawHorizontalLine(int y, int x1, int x2) {
+    do Screen.drawPixel(x1, y);
+    while(x1 < x2) {
+      let x1 = x1 + 1;
+      do Screen.drawPixel(x1, y);
+    }
+    return;
+  }
+
+  function void drawRectangle(int x1, int y1, int x2, int y2) {
+    if((x1 < 0) | (x1 > 511)) {
+      do Sys.error(9);
+    }
+    if((x2 < 0) | (x2 > 511)) {
+      do Sys.error(9);
+    }
+    if((y1 < 0) | (y1 > 255)) {
+      do Sys.error(9);
+    }
+    if((y2 < 0) | (y2 > 255)) {
+      do Sys.error(9);
+    }
+    if((x1 > x2) | (y1 > y2)) {
+      do Sys.error(9);
+    }
+
+    do Screen.drawVerticalLine(x1, y1, y2);
+    while(x1 < x2) {
+      let x1 = x1 + 1;
+      do Screen.drawVerticalLine(x1, y1, y2);
+    }
+    return;
+  }
+
+  function void drawCircle(int x, int y, int r) {
+    var int h, a, currentY;
+
+    if((x < 0) | (x > 511)) {
+      do Sys.error(12);
+    }
+    if((y < 0) | (y > 255)) {
+      do Sys.error(12);
+    }
+    if((r < 0) | (r > 181)) {
+      do Sys.error(13);
+    }
+
+    let currentY = Math.max(0, y - r);
+    while((currentY < 256) & (currentY < (y + r + 1))) {
+      let h = Math.abs(y - currentY);
+      let a = Math.sqrt((r * r) - (h * h));
+      do Screen.drawHorizontalLine(currentY, Math.max(0, x - a), Math.min(511, x + a));
+      let currentY = currentY + 1;
+    }
+    return;
+  }
+}

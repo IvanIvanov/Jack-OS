@@ -1,0 +1,172 @@
+/**
+ * Copyright (c) 2011 Ivan Vladimirov Ivanov (ivan.vladimirov.ivanov@gmail.com)
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+
+class String {
+
+  field int sLength;
+  field int maxLength;
+  field Array string;
+
+  constructor String new(int aMaxLength) {
+    if(aMaxLength < 0) {
+      do Sys.error(14);
+    }
+    let sLength = 0;
+    let maxLength = aMaxLength;
+    if(maxLength = 0) {
+      let string = Array.new(1);
+    }
+    else {
+      let string = Array.new(maxLength);
+    }
+    return this;
+  }
+
+  method void dispose() {
+    do string.dispose();
+    do Memory.deAlloc(this);
+    return;
+  }
+
+  method int length() {
+    return sLength;
+  }
+
+  method char charAt(int j) {
+    if((j < 0) | (j > (sLength - 1))) {
+      do Sys.error(15);
+    }
+    return string[j];
+  }
+
+  method void setCharAt(int j, char c) {
+    if((j < 0) | (j > (sLength - 1))) {
+      do Sys.error(16);
+    }
+    let string[j] = c;
+    return;
+  }
+
+  method String appendChar(char c) {
+    if(sLength = maxLength) {
+      do Sys.error(17);
+    }
+
+    let string[sLength] = c;
+    let sLength = sLength + 1;
+    return this;
+  }
+
+  method void eraseLastChar() {
+    if(sLength = 0) {
+      do Sys.error(18);
+    }
+
+    let sLength = sLength - 1;
+    return;
+  }
+
+  method int intValue() {
+    var int value, i;
+    var boolean sign;
+    
+    let i = 0;
+    let value = 0;
+    let sign = false;
+    if((sLength > 0) & (string[0] = 45)) {
+      let sign = true;
+      let i = i + 1;
+    }
+    while(true) {
+      if(i = sLength) {
+        if(sign) {
+          let value = -value;
+        }
+        return value;
+      }
+      if((string[i] > 47) & (string[i] < 58)) {
+        let value = (10 * value) + (string[i] - 48);
+      }
+      else {
+        return value;
+      }
+      let i = i + 1;
+    }
+  }
+
+  method void setInt(int j) {
+    var int d;
+    var boolean sign;
+
+    let sLength = 0;
+    let sign = false;
+    if(j < 0) {
+      let sign = true;
+      let j = -j;
+    }
+    if(j = 0) {
+      do appendChar(48);
+    }
+
+    while(j > 0) {
+      let d = j - ((j / 10) * 10);
+      do appendChar(d + 48);
+      let j = j / 10;
+    }
+
+    if(sign) {
+      do appendChar(45);
+    }
+
+    return reverse();
+  }
+
+  method String reverse() {
+    var int i;
+    var int n;
+    var int t;
+
+    let i = 0;
+    let n = Math.divide(sLength, 2);
+    while(i < n) {
+      let t = string[i];
+      let string[i] = string[sLength - i - 1];
+      let string[sLength - i - 1] = t;
+      let i = i + 1;
+    }
+    return this;
+  }
+
+  function char backSpace() {
+    return 129;
+  }
+
+  function char doubleQuote() {
+    return 34;
+  }
+
+  function char newLine() {
+    return 128;
+  }
+}
+ 

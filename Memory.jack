@@ -1,0 +1,117 @@
+/**
+ * Copyright (c) 2011 Ivan Vladimirov Ivanov (ivan.vladimirov.ivanov@gmail.com)
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+
+class Memory {
+
+  static Array memory;
+  static Array heap;
+  static int heapSize;
+  static Array freeListHead;
+  static Array freeListTail;
+
+  function void init() {
+    var Array block;
+
+    let memory = 0;
+    let heap = 2048;
+    let heapSize = 14336;
+    let freeListHead = heap;
+    let freeListTail = 16382;
+    let block = heap + 2;
+    let block[0] = heapSize - 4;
+    let block[1] = freeListTail;
+    let freeListHead[0] = 2;
+    let freeListHead[1] = block;
+    let freeListTail[0] = 2;
+    let freeListTail[1] = 0;
+    return;
+  }
+
+  function int peek(int address) {
+    return memory[address];
+  }
+
+  function void poke(int address, int value) {
+    let memory[address] = value;
+    return;
+  }
+
+  function Array alloc(int size) {
+    var Array currentPointer;
+    var Array result;
+    var Array temp;
+
+    if(size < 1) {
+      do Sys.error(5);
+    }
+
+    let currentPointer = freeListHead[1];
+    while(true) {
+      if(currentPointer = freeListTail) {
+        do Sys.error(6);
+      }
+      if(currentPointer[0] > (size + 2)) {
+        let temp = (currentPointer[0] - (size + 1)) + currentPointer;
+        let temp[0] = size + 1;
+        let result = temp + 1;
+        let currentPointer[0] = currentPointer[0] - (size + 1);
+        return result;
+      }
+      let currentPointer = currentPointer[1];
+    } 
+  }
+
+  function void deAlloc(Array o) {
+    var Array newNode;
+    var Array previous;
+    var Array current;
+
+    let newNode = o - 1;
+    let previous = freeListHead;
+    let current = previous[1];
+
+    while(true) {
+      if(current > newNode) {
+        let newNode[1] = current;
+        let previous[1] = newNode;
+        do Memory.mergeBlocks(newNode, current);
+        do Memory.mergeBlocks(previous, newNode);
+        return;
+      }
+      let previous = previous[1];
+      let current = current[1];
+    }
+  }
+
+  function void mergeBlocks(Array first, Array second) {
+    if(first = freeListHead) { return; }
+    if(second = freeListTail) { return; }
+
+    if((first + first[0]) = second) {
+      let first[0] = first[0] + second[0];
+      let first[1] = second[1];
+    }
+    return;
+  }
+}
+
